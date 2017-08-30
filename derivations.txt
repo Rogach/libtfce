@@ -1,0 +1,13 @@
+integrate 1/sqrt(2\pi) e^(-x^2/2) dx from -infinity to infinity
+
+integrate 1/sqrt(2\pi(\sigma^2)) e^(-x^2/(2(\sigma^2))) dx from -infinity to t
+
+## mean of offset distribution:
+# from -∞ to t:
+>> integrate \beta x 1/sqrt(2\pi(\sigma^2)) e^(-x^2/(2(\sigma^2))) dx from -infinity to t
+integral_(-∞)^t (β x e^(-x^2/(2 σ^2)))/sqrt(2 π σ^2) dx 
+= -(β sqrt(σ^2) e^(-t^2/(2 σ^2)))/sqrt(2 π)
+# from t to ∞:
+>> integrate (1-\beta) x 1/sqrt(2\pi(\sigma^2)) e^(-x^2/(2(\sigma^2))) dx from t to infinity
+integral_t^∞ ((1 - β) x e^(-x^2/(2 σ^2)))/sqrt(2 π σ^2) dx 
+= ((1 - β) sqrt(σ^2) e^(-t^2/(2 σ^2)))/sqrt(2 π)

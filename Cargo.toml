@@ -1,0 +1,6 @@
+[package]
+name = "tfce-explorer"
+version = "0.1.0"
+authors = ["Rogach <platon7pronko@gmail.com>"]
+
+[dependencies]
