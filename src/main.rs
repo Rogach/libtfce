@@ -347,7 +347,7 @@ fn test_get_clusters() {
 
 #[bench]
 fn benchmark_get_clusters(b: &mut Bencher) {
-    let mut voxels = generate_1d_field(50000, 0.1, 1.0);
+    let mut voxels = generate_1d_field(10000, 0.1, 1.0);
     b.iter(|| get_clusters(&mut voxels, 0.5));
 }
 
@@ -361,13 +361,13 @@ fn test_slow_tfce() {
 
 #[bench]
 fn benchmark_slow_tfce(b: &mut Bencher) {
-    let mut voxels = generate_1d_field(50000, 0.1, 1.0);
+    let mut voxels = generate_1d_field(10000, 0.1, 1.0);
     b.iter(|| slow_tfce(&mut voxels, 50));
 }
 
 #[bench]
 fn benchmark_fast_tfce(b: &mut Bencher) {
-    let mut voxels = generate_1d_field(50000, 0.1, 1.0);
+    let mut voxels = generate_1d_field(10000, 0.1, 1.0);
     b.iter(|| fast_tfce(&mut voxels));
 }
 
