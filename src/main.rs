@@ -5,11 +5,9 @@
 #![allow(unused_imports)]
 #![allow(unused_mut)]
 
-extern crate bit_set;
 extern crate rand;
 extern crate test;
 
-use bit_set::BitSet;
 use std::collections::VecDeque;
 use rand::{Rng, StdRng, SeedableRng};
 use test::Bencher;
@@ -35,9 +33,9 @@ impl Voxel {
     }
 }
 
-fn slow_tfce(voxels: &mut Vec<Voxel>) {
+fn slow_tfce(voxels: &mut Vec<Voxel>, steps: i32) {
     let max_value = voxels.iter().map(|v| v.value).fold(0.0, f64::max);
-    let delta = max_value / 50.0;
+    let delta = max_value / (steps as f64);
 
     let mut t = delta / 2.0;
     while t < max_value {
@@ -126,7 +124,7 @@ fn benchmark_get_clusters(b: &mut Bencher) {
 #[test]
 fn test_slow_tfce() {
     let mut voxels = generate_1d_field(6, 0.0, 1.0);
-    slow_tfce(&mut voxels);
+    slow_tfce(&mut voxels, 50);
     println!("{:?}", voxels.iter().map(|v| v.value).collect::<Vec<f64>>());
     println!("{:?}", voxels.iter().map(|v| v.tfce_value).collect::<Vec<f64>>());
 }
@@ -134,7 +132,7 @@ fn test_slow_tfce() {
 #[bench]
 fn benchmark_slow_tfce(b: &mut Bencher) {
     let mut voxels = generate_1d_field(10000, 0.1, 1.0);
-    b.iter(|| slow_tfce(&mut voxels));
+    b.iter(|| slow_tfce(&mut voxels, 50));
 }
 
 
