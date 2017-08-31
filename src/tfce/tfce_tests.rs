@@ -17,6 +17,7 @@ fn test_build_clusters_single_element() {
         build_cluster_tree(&mut voxels),
         Cluster {
             voxel_indices: vec![0],
+            size: 1,
             parent_cluster_1: None,
             parent_cluster_2: None
         }
@@ -33,6 +34,7 @@ fn test_build_clusters_two_elements() {
         build_cluster_tree(&mut voxels),
         Cluster {
             voxel_indices: vec![1, 0],
+            size: 2,
             parent_cluster_1: None,
             parent_cluster_2: None
         }
@@ -50,6 +52,7 @@ fn test_build_clusters_three_elements_linear() {
         build_cluster_tree(&mut voxels),
         Cluster {
             voxel_indices: vec![2, 1, 0],
+            size: 3,
             parent_cluster_1: None,
             parent_cluster_2: None
         }
@@ -67,6 +70,7 @@ fn test_build_clusters_three_elements_hut() {
         build_cluster_tree(&mut voxels),
         Cluster {
             voxel_indices: vec![1, 2, 0],
+            size: 3,
             parent_cluster_1: None,
             parent_cluster_2: None
         }
@@ -85,13 +89,16 @@ fn test_build_clusters_four_elements_linear_with_peak() {
         build_cluster_tree(&mut voxels),
         Cluster {
             voxel_indices: vec![],
+            size: 4,
             parent_cluster_1: Some(Box::new(Cluster {
                 voxel_indices: vec![0, 1, 2],
+                size: 3,
                 parent_cluster_1: None,
                 parent_cluster_2: None
             })),
             parent_cluster_2: Some(Box::new(Cluster {
                 voxel_indices: vec![3],
+                size: 1,
                 parent_cluster_1: None,
                 parent_cluster_2: None
             }))
@@ -112,13 +119,16 @@ fn test_build_clusters_five_elements_two_clusters() {
         build_cluster_tree(&mut voxels),
         Cluster {
             voxel_indices: vec![],
+            size: 5,
             parent_cluster_1: Some(Box::new(Cluster {
                 voxel_indices: vec![0, 1, 2],
+                size: 3,
                 parent_cluster_1: None,
                 parent_cluster_2: None
             })),
             parent_cluster_2: Some(Box::new(Cluster {
                 voxel_indices: vec![3, 4],
+                size: 2,
                 parent_cluster_1: None,
                 parent_cluster_2: None
             }))

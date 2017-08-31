@@ -1,5 +1,6 @@
+#[cfg(test)]
 mod tfce_tests;
-mod approximate_tfce;
+pub mod approximate_tfce;
 
 use std::collections::BinaryHeap;
 use std::mem;
@@ -9,6 +10,7 @@ use ::voxel_priority::VoxelPriority;
 #[derive(Debug, PartialEq, Eq)]
 struct Cluster {
     voxel_indices: Vec<usize>,
+    size: usize,
     parent_cluster_1: Option<Box<Cluster>>,
     parent_cluster_2: Option<Box<Cluster>>
 }
@@ -16,6 +18,7 @@ impl Cluster {
     fn new() -> Cluster {
         Cluster {
             voxel_indices: Vec::new(),
+            size: 0,
             parent_cluster_1: None,
             parent_cluster_2: None
         }
@@ -74,6 +77,7 @@ fn build_cluster_tree(voxels: &mut Vec<Voxel>) -> Cluster {
                 // create new cluster, pointing to two older ones
                 current_cluster = Cluster {
                     voxel_indices: Vec::new(),
+                    size: current_cluster.size + other_hunk.cluster.size,
                     parent_cluster_1: Some(Box::new(other_hunk.cluster)),
                     parent_cluster_2: Some(Box::new(current_cluster))
                 };
@@ -89,6 +93,7 @@ fn build_cluster_tree(voxels: &mut Vec<Voxel>) -> Cluster {
                 visited[index] = true;
                 current_value = value;
                 current_cluster.voxel_indices.push(index);
+                current_cluster.size += 1;
                 for &ni in voxels[index].voxel_links.iter() {
                     if !visited[ni] {
                         voxel_queue.push(VoxelPriority { value: voxels[ni].value, index: ni });
@@ -124,6 +129,7 @@ fn build_cluster_tree(voxels: &mut Vec<Voxel>) -> Cluster {
             // create new cluster, pointing to two older ones
             current_cluster = Cluster {
                 voxel_indices: Vec::new(),
+                size: current_cluster.size + other_hunk.cluster.size,
                 parent_cluster_1: Some(Box::new(other_hunk.cluster)),
                 parent_cluster_2: Some(Box::new(current_cluster))
             };
@@ -138,13 +144,13 @@ fn build_cluster_tree(voxels: &mut Vec<Voxel>) -> Cluster {
 
 fn fill_clusters(voxels: &mut Vec<Voxel>, root_cluster: Cluster) {
     let mut cluster_stack = Vec::new();
-    cluster_stack.push((root_cluster, 0: i32, 0.0, 0.0));
+    cluster_stack.push((root_cluster, 0.0, 0.0));
 
-    while let Some((cluster, mut sz, mut prev_value, mut prev_tfce_value)) = cluster_stack.pop() {
+    while let Some((cluster, mut prev_value, mut prev_tfce_value)) = cluster_stack.pop() {
+        let mut sz = cluster.size;
         for vi in cluster.voxel_indices.into_iter().rev() {
             let value = voxels[vi].value;
             let delta = value - prev_value;
-            sz += 1;
             let tfce_value =
                 prev_tfce_value +
                 (sz as f64).powf(2.0/3.0) * value.powf(2.0) * delta;
@@ -152,12 +158,13 @@ fn fill_clusters(voxels: &mut Vec<Voxel>, root_cluster: Cluster) {
 
             prev_value = value;
             prev_tfce_value = tfce_value;
+            sz -= 1;
         }
         if let Some(box cluster) = cluster.parent_cluster_1 {
-            cluster_stack.push((cluster, sz, prev_value, prev_tfce_value));
+            cluster_stack.push((cluster, prev_value, prev_tfce_value));
         }
         if let Some(box cluster) = cluster.parent_cluster_2 {
-            cluster_stack.push((cluster, sz, prev_value, prev_tfce_value));
+            cluster_stack.push((cluster, prev_value, prev_tfce_value));
         }
     }
 }
