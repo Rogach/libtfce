@@ -9,6 +9,7 @@ mod voxel;
 mod voxel_priority;
 mod field;
 mod tfce;
+mod ttest;
 
 use ::field::generate_1d_field;
 use ::tfce::tfce;
