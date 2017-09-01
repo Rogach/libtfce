@@ -1,6 +1,7 @@
 #![feature(test)]
 #![feature(type_ascription)]
 #![feature(box_patterns)]
+#![allow(dead_code)]
 
 extern crate rand;
 extern crate test;

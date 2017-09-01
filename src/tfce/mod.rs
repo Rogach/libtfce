@@ -151,9 +151,12 @@ fn fill_clusters(voxels: &mut Vec<Voxel>, root_cluster: Cluster) {
         for vi in cluster.voxel_indices.into_iter().rev() {
             let value = voxels[vi].value;
             let delta = value - prev_value;
+            let k = 2.0/3.0;
+            let e = 2.0;
+            let e1 = e + 1.0;
             let tfce_value =
                 prev_tfce_value +
-                (sz as f64).powf(2.0/3.0) * value.powf(2.0) * delta;
+                (sz as f64).powf(k) * ((value.powf(e1) - prev_value.powf(e1)) / e1) * delta;
             voxels[vi].tfce_value = tfce_value;
 
             prev_value = value;

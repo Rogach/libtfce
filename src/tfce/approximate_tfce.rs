@@ -1,7 +1,6 @@
 use ::voxel::Voxel;
 use std::collections::VecDeque;
 
-#[allow(dead_code)]
 pub fn approximate_tfce(voxels: &mut Vec<Voxel>, steps: i32) {
     let max_value = voxels.iter().map(|v| v.value).fold(0.0, f64::max);
     let delta = max_value / (steps as f64);
