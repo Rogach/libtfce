@@ -32,9 +32,9 @@ struct ClusterHunk {
     cluster: Cluster
 }
 
-pub fn tfce(voxels: &mut Vec<Voxel>) {
+pub fn tfce(voxels: &mut Vec<Voxel>, k: f64, e: f64) {
     let cluster = build_cluster_tree(voxels);
-    fill_clusters(voxels, cluster);
+    fill_clusters(voxels, cluster, k, e);
 }
 
 fn build_cluster_tree(voxels: &mut Vec<Voxel>) -> Cluster {
@@ -154,7 +154,7 @@ fn build_cluster_tree(voxels: &mut Vec<Voxel>) -> Cluster {
     current_cluster
 }
 
-fn fill_clusters(voxels: &mut Vec<Voxel>, root_cluster: Cluster) {
+fn fill_clusters(voxels: &mut Vec<Voxel>, root_cluster: Cluster, k: f64, e: f64) {
     let mut cluster_stack = Vec::new();
     cluster_stack.push((root_cluster, 0.0f64, 0.0f64));
 
@@ -162,8 +162,6 @@ fn fill_clusters(voxels: &mut Vec<Voxel>, root_cluster: Cluster) {
         let mut sz = cluster.size;
         for vi in cluster.voxel_indices.into_iter().rev() {
             let value = voxels[vi].value;
-            let k = 2.0/3.0;
-            let e = 2.0;
             let e1 = e + 1.0;
             let tfce_value =
                 prev_tfce_value +

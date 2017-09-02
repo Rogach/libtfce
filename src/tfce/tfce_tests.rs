@@ -7,7 +7,7 @@ use test::Bencher;
 fn benchmark_tfce(b: &mut Bencher) {
     let mut voxels = generate_1d_field(10000);
     set_random_values(&mut voxels, 0.1, 1.0, &[17556, 31771, 29830, 29830]);
-    b.iter(|| tfce(&mut voxels));
+    b.iter(|| tfce(&mut voxels, 2.0/3.0, 2.0));
 }
 
 #[test]

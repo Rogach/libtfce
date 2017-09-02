@@ -99,7 +99,7 @@ fn example_permutation() {
                 for (v, tv) in voxels.iter_mut().zip(::ttest::ttest_rel_vec(&a, &b).into_iter()) {
                     v.value = tv.abs();
                 }
-                tfce(&mut voxels);
+                tfce(&mut voxels, 2.0/3.0, 2.0);
                 voxels.iter().map(|v| v.tfce_value).collect()
             }
         )
@@ -119,7 +119,7 @@ fn tfce_fuzztest() {
         approximate_tfce(&mut approx_voxels, 10000);
 
         let mut exact_voxels = voxels.clone();
-        tfce(&mut exact_voxels);
+        tfce(&mut exact_voxels, 2.0/3.0, 2.0);
 
         for n in 0..voxels.len() {
             if (approx_voxels[n].tfce_value - exact_voxels[n].tfce_value).abs() > 1e-3 {
@@ -156,7 +156,7 @@ fn example_tfce_2d8c() {
     );
 
     let mut exact_voxels = voxels.clone();
-    tfce(&mut exact_voxels);
+    tfce(&mut exact_voxels, 2.0/3.0, 2.0);
     let exact_data = exact_voxels.iter().map(|v| v.tfce_value).collect::<Vec<f64>>();
     println!("pyplot.subplot2grid((3,2), (1,0))");
     println!("pyplot.title('exact')");
@@ -190,7 +190,7 @@ fn example_tfce_1d() {
     let approx_data = approx_voxels.iter().map(|v| v.tfce_value).collect::<Vec<f64>>();
 
     let mut exact_voxels = voxels.clone();
-    tfce(&mut exact_voxels);
+    tfce(&mut exact_voxels, 2.0/3.0, 2.0);
     let exact_data = exact_voxels.iter().map(|v| v.tfce_value).collect::<Vec<f64>>();
 
     println!("from matplotlib import pyplot");
