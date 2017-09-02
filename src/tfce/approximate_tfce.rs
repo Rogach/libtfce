@@ -5,11 +5,11 @@ pub fn approximate_tfce(voxels: &mut Vec<Voxel>, steps: i32) {
     let max_value = voxels.iter().map(|v| v.value).fold(0.0, f64::max);
     let delta = max_value / (steps as f64);
 
-    let mut t = delta / 2.0;
+    let mut t = 0.0;
     while t < max_value {
         let clusters = get_clusters(voxels, t);
         for cluster in clusters.into_iter() {
-            let increase = (cluster.len() as f64).powf(2.0/3.0) * t.powf(2.0) * delta;
+            let increase = (cluster.len() as f64).powf(2.0/3.0) * (t + delta / 2.0).powf(2.0) * delta;
             for i in cluster.into_iter() {
                 voxels[i].tfce_value += increase;
             }
@@ -37,13 +37,15 @@ fn get_clusters(voxels: &mut Vec<Voxel>, min_value: f64) -> Vec<Vec<usize>> {
             let mut queue = VecDeque::new();
             queue.push_back(i);
             while let Some(vi) = queue.pop_front() {
-                current_cluster.push(vi);
-                for ni in voxels[vi].voxel_links.iter() {
-                    if !visited[*ni] && voxels[*ni].value >= min_value {
-                        queue.push_back(*ni);
+                if !visited[vi] {
+                    current_cluster.push(vi);
+                    for ni in voxels[vi].voxel_links.iter() {
+                        if !visited[*ni] && voxels[*ni].value >= min_value {
+                            queue.push_back(*ni);
+                        }
                     }
+                    visited[vi] = true;
                 }
-                visited[vi] = true;
             }
             clusters.push(current_cluster);
         }
@@ -61,7 +63,7 @@ mod tests {
 
     #[test]
     fn test_get_clusters() {
-        let mut voxels = generate_1d_field(6, 0.0, 1.0);
+        let mut voxels = generate_1d_field(6, 0.0, 1.0, &[17556, 31771, 29830, 29830]);
         voxels[2].value = 3.0;
         voxels[3].value = 3.5;
         assert_eq!(
@@ -72,13 +74,13 @@ mod tests {
 
     #[bench]
     fn benchmark_get_clusters(b: &mut Bencher) {
-        let mut voxels = generate_1d_field(10000, 0.1, 1.0);
+        let mut voxels = generate_1d_field(10000, 0.1, 1.0, &[17556, 31771, 29830, 29830]);
         b.iter(|| get_clusters(&mut voxels, 0.5));
     }
 
     #[test]
     fn test_approximate_tfce() {
-        let mut voxels = generate_1d_field(6, 0.0, 1.0);
+        let mut voxels = generate_1d_field(6, 0.0, 1.0, &[17556, 31771, 29830, 29830]);
         approximate_tfce(&mut voxels, 50);
         println!("{:?}", voxels.iter().map(|v| v.value).collect::<Vec<f64>>());
         println!("{:?}", voxels.iter().map(|v| v.tfce_value).collect::<Vec<f64>>());
@@ -86,7 +88,7 @@ mod tests {
 
     #[bench]
     fn benchmark_approximate_tfce(b: &mut Bencher) {
-        let mut voxels = generate_1d_field(10000, 0.1, 1.0);
+        let mut voxels = generate_1d_field(10000, 0.1, 1.0, &[17556, 31771, 29830, 29830]);
         b.iter(|| approximate_tfce(&mut voxels, 50));
     }
 }

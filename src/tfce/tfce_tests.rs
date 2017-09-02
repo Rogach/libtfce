@@ -4,7 +4,7 @@ use test::Bencher;
 
 #[bench]
 fn benchmark_tfce(b: &mut Bencher) {
-    let mut voxels = generate_1d_field(10000, 0.1, 1.0);
+    let mut voxels = generate_1d_field(10000, 0.1, 1.0, &[17556, 31771, 29830, 29830]);
     b.iter(|| tfce(&mut voxels));
 }
 
@@ -88,11 +88,11 @@ fn test_build_clusters_four_elements_linear_with_peak() {
     assert_eq!(
         build_cluster_tree(&mut voxels),
         Cluster {
-            voxel_indices: vec![],
+            voxel_indices: vec![2],
             size: 4,
             parent_cluster_1: Some(Box::new(Cluster {
-                voxel_indices: vec![0, 1, 2],
-                size: 3,
+                voxel_indices: vec![0, 1],
+                size: 2,
                 parent_cluster_1: None,
                 parent_cluster_2: None
             })),
@@ -118,11 +118,11 @@ fn test_build_clusters_five_elements_two_clusters() {
     assert_eq!(
         build_cluster_tree(&mut voxels),
         Cluster {
-            voxel_indices: vec![],
+            voxel_indices: vec![2],
             size: 5,
             parent_cluster_1: Some(Box::new(Cluster {
-                voxel_indices: vec![0, 1, 2],
-                size: 3,
+                voxel_indices: vec![0, 1],
+                size: 2,
                 parent_cluster_1: None,
                 parent_cluster_2: None
             })),

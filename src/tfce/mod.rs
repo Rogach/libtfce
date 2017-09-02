@@ -63,60 +63,65 @@ fn build_cluster_tree(voxels: &mut Vec<Voxel>) -> Cluster {
 
     while !cluster_stack.is_empty() || !voxel_queue.is_empty() {
         while let Some(VoxelPriority { value, index }) = voxel_queue.pop() {
-            while value < low_value && !cluster_stack.is_empty() {
-                let mut other_hunk = cluster_stack.pop().unwrap();
+            if !visited[index] {
+                if value < low_value && !cluster_stack.is_empty() {
+                    let mut other_hunk = cluster_stack.pop().unwrap();
 
-                // merge voxel queues, smaller into bigger
-                if voxel_queue.len() < other_hunk.voxel_queue.len() {
-                    mem::swap(&mut voxel_queue, &mut other_hunk.voxel_queue);
-                }
-                for i in other_hunk.voxel_queue.into_iter() {
-                    voxel_queue.push(i);
-                }
-
-                let shared_voxel = other_hunk.cluster.voxel_indices.pop().unwrap();
-                other_hunk.cluster.size -= 1;
-
-                // create new cluster, pointing to two older ones
-                current_cluster = Cluster {
-                    voxel_indices: vec![shared_voxel],
-                    size: current_cluster.size + other_hunk.cluster.size + 1,
-                    parent_cluster_1: Some(Box::new(other_hunk.cluster)),
-                    parent_cluster_2: Some(Box::new(current_cluster))
-                };
-
-                // set low value to older low value
-                low_value = other_hunk.low_value;
-            }
-
-            if value <= current_value {
-                // normal descent, still in the same cluster
-                // just mark as visited, add to current cluster
-                // and traverse voxel links
-                visited[index] = true;
-                current_value = value;
-                current_cluster.voxel_indices.push(index);
-                current_cluster.size += 1;
-                for &ni in voxels[index].voxel_links.iter() {
-                    if !visited[ni] {
-                        voxel_queue.push(VoxelPriority { value: voxels[ni].value, index: ni });
+                    // merge voxel queues, smaller into bigger
+                    if voxel_queue.len() < other_hunk.voxel_queue.len() {
+                        mem::swap(&mut voxel_queue, &mut other_hunk.voxel_queue);
                     }
-                }
-            } else {
-                // traversed to other hill
-                cluster_stack.push(ClusterHunk {
-                    low_value: low_value,
-                    voxel_queue: mem::replace(&mut voxel_queue, BinaryHeap::new()),
-                    cluster: mem::replace(&mut current_cluster, Cluster::new())
-                });
-                low_value = current_value;
+                    for i in other_hunk.voxel_queue.into_iter() {
+                        voxel_queue.push(i);
+                    }
 
-                let mut max_index = index;
-                while let Some(bigger_index) = traverse_max(max_index, voxels) {
-                    max_index = bigger_index;
+                    let shared_voxel = other_hunk.cluster.voxel_indices.pop().unwrap();
+                    other_hunk.cluster.size -= 1;
+
+                    // create new cluster, pointing to two older ones
+                    current_cluster = Cluster {
+                        voxel_indices: vec![shared_voxel],
+                        size: current_cluster.size + other_hunk.cluster.size + 1,
+                        parent_cluster_1: Some(Box::new(other_hunk.cluster)),
+                        parent_cluster_2: Some(Box::new(current_cluster))
+                    };
+
+                    // push current voxel onto queue
+                    voxel_queue.push(VoxelPriority { value, index });
+
+                    // set low value to older low value
+                    current_value = low_value;
+                    low_value = other_hunk.low_value;
+                } else if value <= current_value {
+                    // normal descent, still in the same cluster
+                    // just mark as visited, add to current cluster
+                    // and traverse voxel links
+                    current_value = value;
+                    visited[index] = true;
+                    current_cluster.voxel_indices.push(index);
+                    current_cluster.size += 1;
+                    for &ni in voxels[index].voxel_links.iter() {
+                        if !visited[ni] {
+                            voxel_queue.push(VoxelPriority { value: voxels[ni].value, index: ni });
+                        }
+                    }
+                } else {
+                    // traversed to other hill
+                    cluster_stack.push(ClusterHunk {
+                        low_value: low_value,
+                        voxel_queue: mem::replace(&mut voxel_queue, BinaryHeap::new()),
+                        cluster: mem::replace(&mut current_cluster, Cluster::new())
+                    });
+                    low_value = current_value;
+
+                    let mut max_index = index;
+                    while let Some(bigger_index) = traverse_max(max_index, voxels) {
+                        max_index = bigger_index;
+                    }
+
+                    current_value = voxels[max_index].value;
+                    voxel_queue.push(VoxelPriority { value: current_value, index: max_index });
                 }
-                current_value = voxels[max_index].value;
-                voxel_queue.push(VoxelPriority { value: current_value, index: max_index });
             }
         }
 
@@ -141,6 +146,7 @@ fn build_cluster_tree(voxels: &mut Vec<Voxel>) -> Cluster {
             };
 
             // set low value to older low value
+            current_value = low_value;
             low_value = other_hunk.low_value;
         }
     }

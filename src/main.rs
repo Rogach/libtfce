@@ -17,8 +17,32 @@ use ::tfce::tfce;
 use ::tfce::approximate_tfce::approximate_tfce;
 
 fn main() {
-    let n = 2;
-    let voxels = generate_2d4c_field(n, 0.0, 1.0);
+    test_2d4c();
+}
+
+fn fuzztest() {
+    for x in 29830..29900 {
+        println!("x = {}", x);
+        let n = 10;
+        let voxels = generate_2d4c_field(n, 0.0, 1.0, &[17556, 31771, 29830, x]);
+
+        let mut approx_voxels = voxels.clone();
+        approximate_tfce(&mut approx_voxels, 10000);
+
+        let mut exact_voxels = voxels.clone();
+        tfce(&mut exact_voxels);
+
+        for n in 0..voxels.len() {
+            if (approx_voxels[n].tfce_value - exact_voxels[n].tfce_value).abs() > 1e-3 {
+                panic!("difference at x = {}", x);
+            }
+        }
+    }
+}
+
+fn test_2d4c() {
+    let n = 20;
+    let voxels = generate_2d4c_field(n, 0.0, 1.0, &[17556, 31771, 29830, 29832]);
 
     println!("import numpy");
     println!("from matplotlib import pyplot");
@@ -32,7 +56,7 @@ fn main() {
     );
 
     let mut approx_voxels = voxels.clone();
-    approximate_tfce(&mut approx_voxels, 100);
+    approximate_tfce(&mut approx_voxels, 5000);
     let approx_data = approx_voxels.iter().map(|v| v.tfce_value).collect::<Vec<f64>>();
     println!("pyplot.subplot2grid((3,2), (0, 1))");
     println!("pyplot.title('approximate')");
