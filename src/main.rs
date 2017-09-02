@@ -12,6 +12,7 @@ mod field;
 mod tfce;
 mod ttest;
 
+use ::field::generate_1d_field;
 use ::field::generate_2d8c_field;
 use ::tfce::tfce;
 use ::tfce::approximate_tfce::approximate_tfce;
@@ -87,5 +88,23 @@ fn test_2d8c() {
     println!("pyplot.plot({:?}, 'r')", approx_data);
     println!("pyplot.plot({:?}, 'b')", exact_data);
 
+    println!("pyplot.show()");
+}
+
+fn test_1d() {
+    let n = 100;
+    let voxels = generate_1d_field(n, 0.0, 1.0, &[17556, 31771, 29830, 29832]);
+
+    let mut approx_voxels = voxels.clone();
+    approximate_tfce(&mut approx_voxels, 5000);
+    let approx_data = approx_voxels.iter().map(|v| v.tfce_value).collect::<Vec<f64>>();
+
+    let mut exact_voxels = voxels.clone();
+    tfce(&mut exact_voxels);
+    let exact_data = exact_voxels.iter().map(|v| v.tfce_value).collect::<Vec<f64>>();
+
+    println!("from matplotlib import pyplot");
+    println!("pyplot.plot({:?}, 'r')", approx_data);
+    println!("pyplot.plot({:?}, 'b')", exact_data);
     println!("pyplot.show()");
 }
