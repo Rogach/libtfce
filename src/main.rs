@@ -11,18 +11,64 @@ mod voxel_priority;
 mod field;
 mod tfce;
 mod ttest;
+mod permutation;
 
 use ::field::generate_1d_field;
 use ::field::generate_2d8c_field;
 use ::field::set_random_values;
 use ::tfce::tfce;
 use ::tfce::approximate_tfce::approximate_tfce;
+use rand::{Rng, StdRng, SeedableRng};
 
 fn main() {
-    test_2d8c();
+    example_permutation();
 }
 
-fn fuzztest() {
+fn example_permutation() {
+    let nsubj = 10;
+    let n = 100;
+
+    let mut voxels = generate_1d_field(n);
+
+    let mut a = Vec::with_capacity(nsubj);
+    let mut b = Vec::with_capacity(nsubj);
+
+    let mut rng = StdRng::from_seed(&[17556, 31771, 29830, 29830]);
+
+    for _ in 0..nsubj {
+        let mut sa = Vec::with_capacity(n);
+        let mut sb = Vec::with_capacity(n);
+        for _ in 0..n {
+            sa.push(rng.next_f64());
+            sb.push(rng.next_f64());
+        }
+        a.push(sa);
+        b.push(sb);
+    }
+
+    for x in 5..15 {
+        for s in 0..nsubj {
+            b[s][x] += 0.8;
+        }
+    }
+
+    let result = permutation::significant_indices(
+        &permutation::run_permutation(
+            &a, &b, 200,
+            &mut |a, b| {
+                for (v, tv) in voxels.iter_mut().zip(::ttest::ttest_rel_vec(&a, &b).into_iter()) {
+                    v.value = tv.abs();
+                }
+                tfce(&mut voxels);
+                voxels.iter().map(|v| v.tfce_value).collect()
+            }
+        )
+    );
+
+    println!("{:?}", result);
+}
+
+fn tfce_fuzztest() {
     for x in 29830..29900 {
         println!("x = {}", x);
         let n = 10;
@@ -43,7 +89,7 @@ fn fuzztest() {
     }
 }
 
-fn test_2d8c() {
+fn example_tfce_2d8c() {
     let n = 20;
     let mut voxels = generate_2d8c_field(n);
     set_random_values(&mut voxels, 0.0, 1.0, &[17556, 31771, 29830, 29832]);
@@ -94,7 +140,7 @@ fn test_2d8c() {
     println!("pyplot.show()");
 }
 
-fn test_1d() {
+fn example_tfce_1d() {
     let n = 100;
     let mut voxels = generate_1d_field(n);
     set_random_values(&mut voxels, 0.0, 1.0, &[17556, 31771, 29830, 29832]);
