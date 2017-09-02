@@ -14,6 +14,7 @@ mod ttest;
 
 use ::field::generate_1d_field;
 use ::field::generate_2d8c_field;
+use ::field::set_random_values;
 use ::tfce::tfce;
 use ::tfce::approximate_tfce::approximate_tfce;
 
@@ -25,7 +26,8 @@ fn fuzztest() {
     for x in 29830..29900 {
         println!("x = {}", x);
         let n = 10;
-        let voxels = generate_2d8c_field(n, 0.0, 1.0, &[17556, 31771, 29830, x]);
+        let mut voxels = generate_2d8c_field(n);
+        set_random_values(&mut voxels, 0.0, 1.0, &[17556, 31771, 29830, x]);
 
         let mut approx_voxels = voxels.clone();
         approximate_tfce(&mut approx_voxels, 10000);
@@ -43,7 +45,8 @@ fn fuzztest() {
 
 fn test_2d8c() {
     let n = 20;
-    let voxels = generate_2d8c_field(n, 0.0, 1.0, &[17556, 31771, 29830, 29832]);
+    let mut voxels = generate_2d8c_field(n);
+    set_random_values(&mut voxels, 0.0, 1.0, &[17556, 31771, 29830, 29832]);
 
     println!("import numpy");
     println!("from matplotlib import pyplot");
@@ -93,7 +96,8 @@ fn test_2d8c() {
 
 fn test_1d() {
     let n = 100;
-    let voxels = generate_1d_field(n, 0.0, 1.0, &[17556, 31771, 29830, 29832]);
+    let mut voxels = generate_1d_field(n);
+    set_random_values(&mut voxels, 0.0, 1.0, &[17556, 31771, 29830, 29832]);
 
     let mut approx_voxels = voxels.clone();
     approximate_tfce(&mut approx_voxels, 5000);
