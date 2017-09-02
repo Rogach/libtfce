@@ -3,4 +3,6 @@ authors = ["Rogach <platon7pronko@gmail.com>"]
 name = "tfce-explorer"
 version = "0.1.0"
 [dependencies]
+chan = "0.1.19"
+num_cpus = "1.6.2"
 rand = "0.3.16"
