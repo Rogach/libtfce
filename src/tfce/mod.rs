@@ -144,19 +144,18 @@ fn build_cluster_tree(voxels: &mut Vec<Voxel>) -> Cluster {
 
 fn fill_clusters(voxels: &mut Vec<Voxel>, root_cluster: Cluster) {
     let mut cluster_stack = Vec::new();
-    cluster_stack.push((root_cluster, 0.0, 0.0));
+    cluster_stack.push((root_cluster, 0.0f64, 0.0f64));
 
     while let Some((cluster, mut prev_value, mut prev_tfce_value)) = cluster_stack.pop() {
         let mut sz = cluster.size;
         for vi in cluster.voxel_indices.into_iter().rev() {
             let value = voxels[vi].value;
-            let delta = value - prev_value;
             let k = 2.0/3.0;
             let e = 2.0;
             let e1 = e + 1.0;
             let tfce_value =
                 prev_tfce_value +
-                (sz as f64).powf(k) * ((value.powf(e1) - prev_value.powf(e1)) / e1) * delta;
+                (sz as f64).powf(k) * ((value.powf(e1) - prev_value.powf(e1)) / e1);
             voxels[vi].tfce_value = tfce_value;
 
             prev_value = value;
