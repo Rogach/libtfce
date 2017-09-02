@@ -74,10 +74,13 @@ fn build_cluster_tree(voxels: &mut Vec<Voxel>) -> Cluster {
                     voxel_queue.push(i);
                 }
 
+                let shared_voxel = other_hunk.cluster.voxel_indices.pop().unwrap();
+                other_hunk.cluster.size -= 1;
+
                 // create new cluster, pointing to two older ones
                 current_cluster = Cluster {
-                    voxel_indices: Vec::new(),
-                    size: current_cluster.size + other_hunk.cluster.size,
+                    voxel_indices: vec![shared_voxel],
+                    size: current_cluster.size + other_hunk.cluster.size + 1,
                     parent_cluster_1: Some(Box::new(other_hunk.cluster)),
                     parent_cluster_2: Some(Box::new(current_cluster))
                 };
@@ -126,10 +129,13 @@ fn build_cluster_tree(voxels: &mut Vec<Voxel>) -> Cluster {
                 voxel_queue.push(i);
             }
 
+            let shared_voxel = other_hunk.cluster.voxel_indices.pop().unwrap();
+            other_hunk.cluster.size -= 1;
+
             // create new cluster, pointing to two older ones
             current_cluster = Cluster {
-                voxel_indices: Vec::new(),
-                size: current_cluster.size + other_hunk.cluster.size,
+                voxel_indices: vec![shared_voxel],
+                size: current_cluster.size + other_hunk.cluster.size + 1,
                 parent_cluster_1: Some(Box::new(other_hunk.cluster)),
                 parent_cluster_2: Some(Box::new(current_cluster))
             };
