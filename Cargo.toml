@@ -2,12 +2,12 @@
 authors = ["Rogach <platon7pronko@gmail.com>"]
 name = "libtfce"
 version = "0.1.0"
+[dependencies]
+byteorder = "1.1.0"
+chan = "0.1.19"
+num_cpus = "1.6.2"
+rand = "0.3.16"
 
 [lib]
 name = "libtfce"
 path = "src/lib.rs"
-
-[dependencies]
-chan = "0.1.19"
-num_cpus = "1.6.2"
-rand = "0.3.16"
