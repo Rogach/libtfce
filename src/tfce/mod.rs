@@ -1,6 +1,6 @@
-#[cfg(test)]
-mod tfce_tests;
 pub mod approximate_tfce;
+pub use self::approximate_tfce::approximate_tfce;
+#[cfg(test)] mod tfce_tests;
 
 use std::collections::BinaryHeap;
 use std::mem;

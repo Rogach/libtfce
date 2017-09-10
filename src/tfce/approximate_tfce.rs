@@ -22,7 +22,7 @@ pub fn approximate_tfce(voxels: &mut Vec<Voxel>, steps: i32) {
     }
 }
 
-fn get_clusters(voxels: &mut Vec<Voxel>, min_value: f64) -> Vec<Vec<usize>> {
+pub fn get_clusters(voxels: &Vec<Voxel>, min_value: f64) -> Vec<Vec<usize>> {
     let mut visited = {
         let mut v = Vec::with_capacity(voxels.len());
         let mut i = 0;

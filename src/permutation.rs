@@ -40,3 +40,24 @@ pub fn significant_indices(perm_result: &Vec<bool>) -> Vec<usize> {
     }
     indices
 }
+
+pub fn get_periods(indices: Vec<usize>) -> Vec<(usize, usize)> {
+    let mut periods = Vec::new();
+    if !indices.is_empty() {
+        let mut stt = indices[0];
+        let mut end = indices[0];
+
+        for i in indices.into_iter().skip(1) {
+            if end + 1 == i {
+                end = i;
+            } else {
+                periods.push((stt, end));
+                stt = i;
+                end = i;
+            }
+        }
+
+        periods.push((stt, end));
+    }
+    periods
+}
