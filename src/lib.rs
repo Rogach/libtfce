@@ -5,6 +5,8 @@
 extern crate rand;
 extern crate test;
 extern crate byteorder;
+extern crate jobsteal;
+extern crate num_cpus;
 
 pub mod voxel;
 pub mod field;
@@ -33,34 +35,43 @@ pub fn explore_tfce_permutation(
     e_min: f64, e_step: f64, e_max: f64
 ) {
 
-    let mut k = k_min;
-    while k <= k_max {
+    let mut pool = jobsteal::make_pool(num_cpus::get()).unwrap();
 
-        let mut e = e_min;
-        while e <= e_max {
+    pool.scope(|scope| {
+        let mut k = k_min;
+        while k <= k_max {
 
-            let result = permutation::get_periods(permutation::significant_indices(
-                &permutation::run_permutation(
-                    a, b, n,
-                    &mut |a, b| {
-                        for (v, tv) in voxels.iter_mut().zip(::ttest::ttest_rel_vec(&a, &b).into_iter()) {
-                            v.value = tv.abs();
-                        }
-                        tfce(voxels, k, e);
-                        voxels.iter().map(|v| v.tfce_value).collect()
+            let mut e = e_min;
+            while e <= e_max {
+
+                let mut voxels = voxels.clone();
+
+                scope.submit(move || {
+                    let result = permutation::get_periods(permutation::significant_indices(
+                        &permutation::run_permutation(
+                            a, b, n,
+                            &mut |ap, bp| {
+                                for (v, tv) in voxels.iter_mut().zip(::ttest::ttest_rel_vec(&ap, &bp).into_iter()) {
+                                    v.value = tv.abs();
+                                }
+                                tfce(&mut voxels, k, e);
+                                voxels.iter().map(|v| v.tfce_value).collect()
+                            }
+                        )
+                    ));
+
+                    if !result.is_empty() {
+                        eprintln!("k = {}, e = {}, {:?}", k, e, result);
                     }
-                )
-            ));
+                });
 
-            if !result.is_empty() {
-                eprintln!("k = {}, e = {}, {:?}", k, e, result);
+                e += e_step;
             }
 
-            e += e_step;
+            k += k_step;
         }
 
-        k += k_step;
-    }
+    });
 }
 
 pub fn read_data_file(filename: String) -> (Vec<Vec<f64>>, Vec<Vec<f64>>) {
