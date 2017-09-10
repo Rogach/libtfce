@@ -79,16 +79,16 @@ pub fn read_data_file(filename: String) -> (Vec<Vec<f64>>, Vec<Vec<f64>>) {
     let mut b = Vec::new();
 
     let mut file = File::open(&filename).expect(&format!("failed to open input file {}", &filename));
-    let subject_count = file.read_i32::<LittleEndian>().unwrap();
+    let subject_count = file.read_u32::<LittleEndian>().unwrap();
     for _ in 0..subject_count {
-        let sa_len = file.read_i32::<LittleEndian>().unwrap();
+        let sa_len = file.read_u32::<LittleEndian>().unwrap();
         let mut sa = Vec::new();
         for _ in 0..sa_len {
             sa.push(file.read_f64::<LittleEndian>().unwrap());
         }
         a.push(sa);
 
-        let sb_len = file.read_i32::<LittleEndian>().unwrap();
+        let sb_len = file.read_u32::<LittleEndian>().unwrap();
         let mut sb = Vec::new();
         for _ in 0..sb_len {
             sb.push(file.read_f64::<LittleEndian>().unwrap());
