@@ -35,7 +35,9 @@ pub fn explore_tfce_permutation(
     e_min: f64, e_step: f64, e_max: f64
 ) {
 
-    let mut pool = jobsteal::make_pool(num_cpus::get()).unwrap();
+    let n_cpu = num_cpus::get();
+    eprintln!("using {} threads to explore TFCE parameters", n_cpu);
+    let mut pool = jobsteal::make_pool(n_cpu).unwrap();
 
     pool.scope(|scope| {
         let mut k = k_min;
@@ -61,7 +63,7 @@ pub fn explore_tfce_permutation(
                     ));
 
                     if !result.is_empty() {
-                        eprintln!("k = {}, e = {}, {:?}", k, e, result);
+                        eprintln!("k = {:.4}, e = {:.4}, {:?}", k, e, result);
                     }
                 });
 
