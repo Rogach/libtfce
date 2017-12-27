@@ -62,7 +62,9 @@ pub fn explore_tfce_permutation(
                         )
                     ));
 
-                    println!("k = {:.4}, e = {:.4}, {:?}", k, e, result);
+                    if result.len() > 0 {
+                        println!("k = {:.4}, e = {:.4}, {:?}", k, e, result);
+                    }
                 });
 
                 e += e_step;
