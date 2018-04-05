@@ -9,7 +9,7 @@ impl Voxel {
     pub fn new(value: f64, links: Vec<usize>) -> Voxel {
         Voxel {
             voxel_links: links,
-            value: value,
+            value,
             tfce_value: 0.0
         }
     }

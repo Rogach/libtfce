@@ -22,6 +22,10 @@ pub mod ttest;
 pub mod permutation;
 mod voxel_priority;
 
+pub mod fiff;
+pub mod freesurfer;
+pub mod stc;
+
 use voxel::Voxel;
 use std::fs::File;
 use byteorder::{LittleEndian, ReadBytesExt};
