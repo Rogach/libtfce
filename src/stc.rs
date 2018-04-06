@@ -25,10 +25,10 @@ pub fn read(filename: &str) -> Stc {
 
     let time_count = file.read_u32::<BigEndian>().unwrap() as usize;
 
-    let mut data = Vec::with_capacity(vertex_count * time_count);
+    let mut data = Vec::with_capacity(time_count);
 
     for _ in 0..time_count {
-        let mut row = Vec::new();
+        let mut row = Vec::with_capacity(vertex_count);
         for _ in 0..vertex_count {
             row.push(file.read_f32::<BigEndian>().unwrap() as f64);
         }
@@ -43,6 +43,20 @@ pub fn read(filename: &str) -> Stc {
         time_count,
         data
     }
+}
+
+pub fn concat_pair(stc_lh: &Stc, stc_rh: &Stc) -> Vec<f64> {
+    let time_count = stc_lh.time_count;
+    let vertex_count = stc_lh.vertex_count + stc_rh.vertex_count;
+
+    let mut data = Vec::with_capacity(time_count * vertex_count);
+
+    for t in 0..time_count {
+        data.extend(&stc_lh.data[t]);
+        data.extend(&stc_rh.data[t]);
+    }
+
+    data
 }
 
 pub fn write(filename: &str, stc: Stc) {

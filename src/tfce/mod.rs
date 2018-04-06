@@ -6,6 +6,7 @@ use std::collections::BinaryHeap;
 use std::mem;
 use ::voxel::Voxel;
 use ::voxel_priority::VoxelPriority;
+use ::permutation;
 
 #[derive(Debug, PartialEq, Eq)]
 struct Cluster {
@@ -32,10 +33,31 @@ struct ClusterHunk {
     cluster: Cluster
 }
 
-pub fn tfce(voxels: &mut Vec<Voxel>, k: f64, e: f64) {
+pub fn tfce(voxels: &mut Vec<Voxel>, e: f64, h: f64) {
     let cluster = build_cluster_tree(voxels);
-    fill_clusters(voxels, cluster, k, e);
+    fill_clusters(voxels, cluster, e, h);
 }
+
+pub fn run_permutation(
+    mut voxels: &mut Vec<Voxel>,
+    a: &Vec<Vec<f64>>,
+    b: &Vec<Vec<f64>>,
+    n: i32,
+    e: f64,
+    h: f64
+) -> Vec<bool> {
+    permutation::run_permutation(
+        &a, &b, n,
+        &mut |a, b| {
+            for (v, tv) in voxels.iter_mut().zip(::ttest::ttest_rel_vec(&a, &b).into_iter()) {
+                v.value = tv.abs();
+            }
+            tfce(&mut voxels, e, h);
+            voxels.iter().map(|v| v.tfce_value).collect()
+        }
+    )
+}
+
 
 fn build_cluster_tree(voxels: &mut Vec<Voxel>) -> Cluster {
     let mut visited = {
@@ -154,7 +176,7 @@ fn build_cluster_tree(voxels: &mut Vec<Voxel>) -> Cluster {
     current_cluster
 }
 
-fn fill_clusters(voxels: &mut Vec<Voxel>, root_cluster: Cluster, k: f64, e: f64) {
+fn fill_clusters(voxels: &mut Vec<Voxel>, root_cluster: Cluster, e: f64, h: f64) {
     let mut cluster_stack = Vec::new();
     cluster_stack.push((root_cluster, 0.0f64, 0.0f64));
 
@@ -162,10 +184,10 @@ fn fill_clusters(voxels: &mut Vec<Voxel>, root_cluster: Cluster, k: f64, e: f64)
         let mut sz = cluster.size;
         for vi in cluster.voxel_indices.into_iter().rev() {
             let value = voxels[vi].value;
-            let e1 = e + 1.0;
+            let h1 = h + 1.0;
             let tfce_value =
                 prev_tfce_value +
-                (sz as f64).powf(k) * ((value.powf(e1) - prev_value.powf(e1)) / e1);
+                (sz as f64).powf(e) * ((value.powf(h1) - prev_value.powf(h1)) / h1);
             voxels[vi].tfce_value = tfce_value;
 
             prev_value = value;

@@ -9,7 +9,9 @@ pub fn ttest_rel(a: &Vec<f64>, b: &Vec<f64>) -> f64 {
         sum2 += v*v;
         i += 1;
     }
-    sum / ((sum2*(nsubj as f64) - sum*sum)/((nsubj - 1) as f64)).sqrt()
+    let t_value = sum / ((sum2*(nsubj as f64) - sum*sum)/((nsubj - 1) as f64)).sqrt();
+    assert!(!t_value.is_nan());
+    t_value
 }
 
 pub fn ttest_rel_vec(a: &Vec<&Vec<f64>>, b: &Vec<&Vec<f64>>) -> Vec<f64> {
@@ -30,7 +32,9 @@ pub fn ttest_rel_vec(a: &Vec<&Vec<f64>>, b: &Vec<&Vec<f64>>) -> Vec<f64> {
             sum2 += v*v;
             s += 1;
         }
-        result.push(sum / ((sum2*(nsubj as f64) - sum*sum)/((nsubj - 1) as f64)).sqrt());
+        let t_value = sum / ((sum2*(nsubj as f64) - sum*sum)/((nsubj - 1) as f64)).sqrt();
+        assert!(!t_value.is_nan());
+        result.push(t_value);
 
         i += 1;
     }

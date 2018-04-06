@@ -1,12 +1,15 @@
+#![feature(exact_chunks)]
+
 extern crate libtfce;
 extern crate clap;
 extern crate byteorder;
 
 use libtfce::field::generate_1d_field;
 use libtfce::tfce;
-use libtfce::ttest;
 use libtfce::permutation;
 use libtfce::read_data_file;
+use libtfce::freesurfer;
+use libtfce::stc;
 
 use clap::{Arg, App};
 use std::fs::File;
@@ -14,46 +17,38 @@ use byteorder::{LittleEndian, WriteBytesExt};
 
 fn main() {
     let args = App::new("libtfce")
-        .arg(Arg::with_name("type")
-             .long("type")
-             .value_name("1d")
-             .required(true)
-             .takes_value(true))
-        .arg(Arg::with_name("input-file")
-             .long("input-file")
-             .value_name("filename")
-             .required(true)
-             .takes_value(true))
-        .arg(Arg::with_name("output-file")
-             .long("output-file")
-             .value_name("filename")
-             .required(true)
-             .takes_value(true))
-        .arg(Arg::with_name("k")
-             .long("k")
-             .short("k")
-             .value_name("value")
-             .required(true)
-             .takes_value(true))
-        .arg(Arg::with_name("e")
-             .long("e")
-             .short("e")
-             .value_name("value")
-             .required(true)
-             .takes_value(true))
-        .arg(Arg::with_name("permutation-count")
-             .long("permutation-count")
-             .value_name("N")
-             .required(true)
-             .takes_value(true))
+        .arg(Arg::with_name("type").long("type").value_name("tp").required(true).takes_value(true)
+            .possible_values(&["1d", "mesh-time"])
+            .display_order(1)
+            .help("TFCE graph configuration"))
+
+        .arg(Arg::with_name("permutation-count").long("permutation-count").short("n").value_name("N").required(true).takes_value(true)
+            .help("Number of permutations"))
+        .arg(Arg::with_name("h").short("h").value_name("value").required(true).takes_value(true)
+            .help("TFCE parameter H, intensity weighting (2 is recommended)"))
+        .arg(Arg::with_name("e").short("e").value_name("value").required(true).takes_value(true)
+            .help("TFCE parameter E, cluster extent weighting (0.666 is recommended)"))
+
+        .arg(Arg::with_name("input-file").long("input-file").value_name("filename").takes_value(true)
+            .help("Input file for (type=1d)"))
+        .arg(Arg::with_name("output-file").long("output-file").value_name("filename").takes_value(true)
+            .help("Output file (type=1d)"))
+
+        .arg(Arg::with_name("source-space").long("source-space").value_name("filename").takes_value(true)
+            .help("Freesurfer source space .fif file, used to extract mesh data (type=mesh-time)"))
+        .arg(Arg::with_name("input-stcs").long("input-stcs").value_name("filenames...").takes_value(true).multiple(true)
+            .help("Input stc files, 4 per subject. Files must be in order: subj1-condA-lh.stc, subj1-condA-rh.stc, subj1-condB-lh.stc, subj1-condB-rh.stc, subj2-condA-lh.stc, etc. (type=mesh-time)"))
+        .arg(Arg::with_name("output-stcs").long("output-stcs").value_name("lh.stc rh.stc").takes_value(true).number_of_values(2)
+            .help("Output stc files, lh and rh stc filenames (type=mesh-time)"))
+
         .get_matches();
 
     let permutation_count =
         args.value_of("permutation-count").unwrap().parse::<i32>()
         .expect("failed to parse permutation-cost");
-    let k =
-        args.value_of("k").unwrap().parse::<f64>()
-        .expect("failed to parse k");
+    let h =
+        args.value_of("h").unwrap().parse::<f64>()
+        .expect("failed to parse h");
     let e =
         args.value_of("e").unwrap().parse::<f64>()
         .expect("failed to parse e");
@@ -65,15 +60,11 @@ fn main() {
             let (a, b) = read_data_file(data_file);
             let mut voxels = generate_1d_field(a[0].len());
 
-            let result = permutation::run_permutation(
-                &a, &b, permutation_count,
-                &mut |a, b| {
-                    for (v, tv) in voxels.iter_mut().zip(::ttest::ttest_rel_vec(&a, &b).into_iter()) {
-                        v.value = tv.abs();
-                    }
-                    tfce(&mut voxels, k, e);
-                    voxels.iter().map(|v| v.tfce_value).collect()
-                }
+            let result = tfce::run_permutation(
+                &mut voxels,
+                &a, &b,
+                permutation_count,
+                e, h
             );
 
             eprintln!("Statistically significant periods: {:?}", permutation::get_periods(permutation::significant_indices(&result)));
@@ -87,6 +78,57 @@ fn main() {
                 output_file.write_u8(if b { 1 } else { 0 }).unwrap();
             }
         },
-        _ => panic!("unknown operation type")
+        Some("mesh-time") => {
+            let source_space_filename =
+                args.value_of("source-space")
+                .expect("--source-space is required for type=mesh-time");
+
+            let input_stc_filenames =
+                args.values_of("input-stcs")
+                .expect("--input-stcs is required for type=mesh-time")
+                .collect::<Vec<&str>>();
+
+            if input_stc_filenames.len() % 4 != 0 {
+                panic!("--input-stcs must have 4 files per subject");
+            }
+
+            let output_stc_filenames =
+                args.values_of("output-stcs")
+                .expect("--output-stcs is required for type=mesh-time")
+                .collect::<Vec<&str>>();
+
+            let mut stcs_a = Vec::new();
+            let mut stcs_b = Vec::new();
+
+            let mut a = Vec::new();
+            let mut b = Vec::new();
+
+            for subj_stcs in input_stc_filenames.exact_chunks(4) {
+                let (a_lh, a_rh) = (stc::read(subj_stcs[0]), stc::read(subj_stcs[1]));
+                let (b_lh, b_rh) = (stc::read(subj_stcs[2]), stc::read(subj_stcs[3]));
+
+                a.push(stc::concat_pair(&a_lh, &a_rh));
+                b.push(stc::concat_pair(&b_lh, &b_rh));
+
+                stcs_a.push((a_lh, a_rh));
+                stcs_b.push((b_lh, b_rh));
+            }
+
+            let mut voxels =
+                freesurfer::extend_graph_into_time(
+                    freesurfer::read_source_space_to_graph(source_space_filename),
+                    stcs_a[0].0.time_count
+                );
+
+            let result = tfce::run_permutation(
+                &mut voxels,
+                &a, &b,
+                permutation_count,
+                e, h
+            );
+
+            eprintln!("Statistically significant periods: {:?}", permutation::get_periods(permutation::significant_indices(&result)).len());
+        },
+        _ => panic!("unknown operation type: {}", args.value_of("type").unwrap())
     };
 }

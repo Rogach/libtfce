@@ -11,7 +11,8 @@ pub fn run_permutation(
 
     let mut distribution = Vec::with_capacity(n as usize);
 
-    for _ in 0..n {
+    for i in 0..n {
+        eprintln!("n = {:4}/{}", i+1, n);
         let mut permuted_a = Vec::with_capacity(nsubj);
         let mut permuted_b = Vec::with_capacity(nsubj);
         for (sa, sb) in a.iter().zip(b.iter()) {
