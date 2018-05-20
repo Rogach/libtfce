@@ -89,13 +89,17 @@ fn main() {
                 .collect::<Vec<&str>>();
 
             if input_stc_filenames.len() % 4 != 0 {
-                panic!("--input-stcs must have 4 files per subject");
+                panic!("--input-stcs must contain 4 files per subject");
             }
 
             let output_stc_filenames =
                 args.values_of("output-stcs")
                 .expect("--output-stcs is required for type=mesh-time")
                 .collect::<Vec<&str>>();
+
+            if output_stc_filenames.len() != 2 {
+                panic!("--output-stcs must contain 2 filenames");
+            }
 
             let mut stcs_a = Vec::new();
             let mut stcs_b = Vec::new();
@@ -128,6 +132,30 @@ fn main() {
             );
 
             eprintln!("Statistically significant periods: {:?}", permutation::get_periods(permutation::significant_indices(&result)).len());
+
+            let mut output_stc_lh = stc::read(input_stc_filenames[0]);
+            let mut output_stc_rh = stc::read(input_stc_filenames[1]);
+            let mut output_data_lh = Vec::new();
+            let mut output_data_rh = Vec::new();
+            for t in 0..output_stc_lh.time_count {
+                let mut time_slice_lh = Vec::new();
+                for i in 0..output_stc_lh.vertex_count {
+                    time_slice_lh.push(if result[(output_stc_lh.vertex_count + output_stc_rh.vertex_count) * t + i] { 1.0 } else { 0.0 });
+                }
+                output_data_lh.push(time_slice_lh);
+
+                let mut time_slice_rh = Vec::new();
+                for i in 0..output_stc_rh.vertex_count {
+                    time_slice_rh.push(if result[(output_stc_lh.vertex_count + output_stc_rh.vertex_count) * t + output_stc_lh.vertex_count + i] { 1.0 } else { 0.0 });
+                }
+                output_data_rh.push(time_slice_rh);
+            }
+
+            output_stc_lh.data = output_data_lh;
+            output_stc_rh.data = output_data_rh;
+            stc::write(output_stc_filenames[0], output_stc_lh);
+            stc::write(output_stc_filenames[1], output_stc_rh);
+
         },
         _ => panic!("unknown operation type: {}", args.value_of("type").unwrap())
     };
