@@ -35,8 +35,8 @@ pub fn explore_tfce_permutation(
     b: &Vec<Vec<f64>>,
     n: i32,
     voxels: &mut Vec<Voxel>,
-    k_min: f64, k_step: f64, k_max: f64,
-    e_min: f64, e_step: f64, e_max: f64
+    e_min: f64, e_step: f64, e_max: f64,
+    h_min: f64, h_step: f64, h_max: f64
 ) {
 
     let n_cpu = num_cpus::get();
@@ -44,37 +44,37 @@ pub fn explore_tfce_permutation(
     let mut pool = jobsteal::make_pool(n_cpu).unwrap();
 
     pool.scope(|scope| {
-        let mut k = k_min;
-        while k <= k_max {
+        let mut e = e_min;
+        while e <= e_max {
 
-            let mut e = e_min;
-            while e <= e_max {
+            let mut h = h_min;
+            while h <= h_max {
 
                 let mut voxels = voxels.clone();
 
                 scope.submit(move || {
-                    let result = permutation::get_periods(permutation::significant_indices(
+                    let result = permutation::significant_indices(
                         &permutation::run_permutation(
                             a, b, n,
                             &mut |ap, bp| {
                                 for (v, tv) in voxels.iter_mut().zip(::ttest::ttest_rel_vec(&ap, &bp).into_iter()) {
                                     v.value = tv.abs();
                                 }
-                                tfce(&mut voxels, k, e);
+                                tfce(&mut voxels, e, h);
                                 voxels.iter().map(|v| v.tfce_value).collect()
                             }
                         )
-                    ));
+                    );
 
                     if result.len() > 0 {
-                        println!("k = {:.4}, e = {:.4}, {:?}", k, e, result);
+                        println!("e = {:.4}, h = {:.4}, {:?} significant voxels", e, h, result.len());
                     }
                 });
 
-                e += e_step;
+                h += h_step;
             }
 
-            k += k_step;
+            e += e_step;
         }
 
     });
