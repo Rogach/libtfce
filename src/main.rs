@@ -40,6 +40,10 @@ fn main() {
              .help("max value for E in --explore mode"))
         .arg(Arg::with_name("e-step").long("e-step").value_name("value").takes_value(true)
              .help("increment for E in --explore mode"))
+        .arg(Arg::with_name("negative").long("negative").takes_value(false)
+             .help("perform one-sided test - assume that our effect is negative and ignore all positive effects. Discards positive t-values"))
+        .arg(Arg::with_name("positive").long("positive").takes_value(false)
+             .help("perform one-sided test - assume that our effect is positive and ignore all negative effects. Discards negative t-values"))
 
         .arg(Arg::with_name("input-file").long("input-file").value_name("filename").takes_value(true)
              .help("Input file for (type=1d)"))
@@ -67,6 +71,12 @@ fn main() {
 
     let explore = args.is_present("explore");
 
+    let negative = args.is_present("negative");
+    let positive = args.is_present("positive");
+    if negative && positive {
+        panic!("can't peform both negative and positive one-sided test simultaneously. Only one of --negative and --positive can be provided");
+    }
+
     match args.value_of("type") {
         Some("1d") => {
             let data_file = args.value_of("input-file").expect("--input-file not provided").into();
@@ -79,7 +89,8 @@ fn main() {
                     &mut voxels,
                     &a, &b,
                     permutation_count,
-                    e, h
+                    e, h,
+                    negative, positive
                 );
 
                 eprintln!("Statistically significant periods: {:?}", permutation::get_periods(permutation::significant_indices(&result)));
@@ -111,7 +122,8 @@ fn main() {
                     permutation_count,
                     &mut voxels,
                     e, e_step, e_max,
-                    h, h_step, h_max
+                    h, h_step, h_max,
+                    negative, positive
                 );
             }
         },
@@ -166,7 +178,8 @@ fn main() {
                     &mut voxels,
                     &a, &b,
                     permutation_count,
-                    e, h
+                    e, h,
+                    negative, positive
                 );
 
                 eprintln!("Statistically significant periods: {:?}", permutation::get_periods(permutation::significant_indices(&result)).len());
@@ -213,7 +226,8 @@ fn main() {
                     permutation_count,
                     &mut voxels,
                     e, e_step, e_max,
-                    h, h_step, h_max
+                    h, h_step, h_max,
+                    negative, positive
                 );
             }
         },

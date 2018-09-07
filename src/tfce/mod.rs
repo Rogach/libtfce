@@ -44,13 +44,21 @@ pub fn run_permutation(
     b: &Vec<Vec<f64>>,
     n: i32,
     e: f64,
-    h: f64
+    h: f64,
+    negative: bool,
+    positive: bool
 ) -> Vec<bool> {
     permutation::run_permutation(
         &a, &b, n,
         &mut |a, b| {
             for (v, tv) in voxels.iter_mut().zip(::ttest::ttest_rel_vec(&a, &b).into_iter()) {
-                v.value = tv.abs();
+                if negative {
+                    v.value = tv.min(0.0).abs();
+                } else if positive {
+                    v.value = tv.max(0.0);
+                } else {
+                    v.value = tv.abs();
+                }
             }
             tfce(&mut voxels, e, h);
             voxels.iter().map(|v| v.tfce_value).collect()

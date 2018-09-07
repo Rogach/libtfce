@@ -36,7 +36,9 @@ pub fn explore_tfce_permutation(
     n: i32,
     voxels: &mut Vec<Voxel>,
     e_min: f64, e_step: f64, e_max: f64,
-    h_min: f64, h_step: f64, h_max: f64
+    h_min: f64, h_step: f64, h_max: f64,
+    negative: bool,
+    positive: bool
 ) {
 
     let n_cpu = num_cpus::get();
@@ -58,7 +60,13 @@ pub fn explore_tfce_permutation(
                             a, b, n,
                             &mut |ap, bp| {
                                 for (v, tv) in voxels.iter_mut().zip(::ttest::ttest_rel_vec(&ap, &bp).into_iter()) {
-                                    v.value = tv.abs();
+                                    if negative {
+                                        v.value = tv.min(0.0).abs();
+                                    } else if positive {
+                                        v.value = tv.max(0.0);
+                                    } else {
+                                        v.value = tv.abs();
+                                    }
                                 }
                                 tfce(&mut voxels, e, h);
                                 voxels.iter().map(|v| v.tfce_value).collect()
